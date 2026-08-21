@@ -1,3 +1,4 @@
+console.log("🔥 C2ple script.js loaded!");
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
