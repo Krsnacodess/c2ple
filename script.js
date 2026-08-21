@@ -47,7 +47,7 @@ button.addEventListener("click", async () => {
 
     if (token) {
 
-      console.log("FCM TOKEN:", token);
+      alert("FCM TOKEN:\n\n" + token);
 
       status.textContent =
         "✅ Notifications enabled!";
