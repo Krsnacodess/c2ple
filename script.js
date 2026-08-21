@@ -389,4 +389,171 @@ if (createCoupleButton) {
 
 }
 
+
+// ===============================
+// COUPLE PAIRING - JOIN COUPLE
+// ===============================
+
+const joinCoupleButton =
+  document.getElementById("joinCouple");
+
+const joinCodeInput =
+  document.getElementById("joinCode");
+
+
+// Join Couple button
+
+if (joinCoupleButton) {
+
+  joinCoupleButton.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+          coupleStatus.textContent =
+            "❌ Please wait for C2ple to connect.";
+
+          return;
+
+        }
+
+
+        const code =
+          joinCodeInput.value
+            .trim()
+            .toUpperCase();
+
+
+        // Check code length
+
+        if (code.length !== 6) {
+
+          coupleStatus.textContent =
+            "❌ Please enter the 6-character couple code.";
+
+          return;
+
+        }
+
+
+        joinCoupleButton.disabled = true;
+
+        joinCoupleButton.textContent =
+          "Connecting... 💕";
+
+
+        // Get the existing couple
+
+        const coupleRef =
+          doc(db, "couples", code);
+
+
+        const coupleSnapshot =
+          await getDoc(coupleRef);
+
+
+        if (!coupleSnapshot.exists()) {
+
+          coupleStatus.textContent =
+            "❌ That couple code doesn't exist.";
+
+          joinCoupleButton.disabled = false;
+
+          joinCoupleButton.textContent =
+            "Join Couple 💗";
+
+          return;
+
+        }
+
+
+        const coupleData =
+          coupleSnapshot.data();
+
+
+        // Check if already full
+
+        if (coupleData.partner2) {
+
+          coupleStatus.textContent =
+            "❌ This couple is already connected.";
+
+          joinCoupleButton.disabled = false;
+
+          joinCoupleButton.textContent =
+            "Join Couple 💗";
+
+          return;
+
+        }
+
+
+        // Don't allow someone to join their own couple
+
+        if (coupleData.partner1 === user.uid) {
+
+          coupleStatus.textContent =
+            "❌ You can't join your own couple.";
+
+          joinCoupleButton.disabled = false;
+
+          joinCoupleButton.textContent =
+            "Join Couple 💗";
+
+          return;
+
+        }
+
+
+        // Add second partner
+
+        await updateDoc(
+          coupleRef,
+          {
+            partner2: user.uid,
+            status: "connected"
+          }
+        );
+
+
+        coupleStatus.textContent =
+          "❤️ You're connected! Your couple is now together.";
+
+        joinCoupleButton.textContent =
+          "Connected ❤️";
+
+
+        console.log(
+          "✅ Couple connected!",
+          code
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "❌ Join Couple failed:",
+          error
+        );
+
+
+        coupleStatus.textContent =
+          "❌ Couldn't join the couple. Check the console.";
+
+        joinCoupleButton.disabled =
+          false;
+
+        joinCoupleButton.textContent =
+          "Join Couple 💗";
+
+      }
+
+    }
+  );
+
 }
