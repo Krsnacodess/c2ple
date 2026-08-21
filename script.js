@@ -256,5 +256,137 @@ if (button) {
 
     }
   );
+  // ===============================
+// COUPLE PAIRING - CREATE COUPLE
+// ===============================
+
+const createCoupleButton =
+  document.getElementById("createCouple");
+
+const pairCodeBox =
+  document.getElementById("pairCodeBox");
+
+const pairCodeDisplay =
+  document.getElementById("pairCode");
+
+const coupleStatus =
+  document.getElementById("coupleStatus");
+
+
+// Cute characters for pairing codes
+// Avoids confusing characters like O/0 and I/1
+
+const cuteCharacters =
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+
+// Generate a random 6-character code
+
+function generateCoupleCode() {
+
+  let code = "";
+
+  for (let i = 0; i < 6; i++) {
+
+    const randomIndex =
+      Math.floor(
+        Math.random() * cuteCharacters.length
+      );
+
+    code += cuteCharacters[randomIndex];
+
+  }
+
+  return code;
+}
+
+
+// Create Couple button
+
+if (createCoupleButton) {
+
+  createCoupleButton.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        // Make sure the user is authenticated
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+          coupleStatus.textContent =
+            "❌ Please wait for C2ple to finish connecting.";
+
+          return;
+
+        }
+
+
+        createCoupleButton.disabled = true;
+
+        createCoupleButton.textContent =
+          "Creating your couple... 💕";
+
+
+        let code = generateCoupleCode();
+
+
+        // Create a Firestore document using the code
+
+        await setDoc(
+          doc(db, "couples", code),
+          {
+            code: code,
+            partner1: user.uid,
+            partner2: null,
+            status: "waiting",
+            createdAt: new Date().toISOString()
+          }
+        );
+
+
+        // Show the code
+
+        pairCodeDisplay.textContent =
+          code;
+
+        pairCodeBox.style.display =
+          "block";
+
+
+        coupleStatus.textContent =
+          "❤️ Your couple code is ready! Share it with your partner.";
+
+
+        createCoupleButton.textContent =
+          "Couple Created ❤️";
+
+
+      } catch (error) {
+
+        console.error(
+          "❌ Create Couple failed:",
+          error
+        );
+
+
+        coupleStatus.textContent =
+          "❌ Couldn't create your couple. Check the console.";
+
+        createCoupleButton.disabled =
+          false;
+
+        createCoupleButton.textContent =
+          "Create Couple 💕";
+
+      }
+
+    }
+  );
+
+}
 
 }
