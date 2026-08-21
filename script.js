@@ -11,7 +11,11 @@ import {
   signInAnonymously,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-
+import {
+  getFirestore,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZ2DeodRJdACy0UNwzQJVBE2aX1nGS3VE",
@@ -32,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 const auth = getAuth(app);
-
+const db = getfirestore(app);
 
 // ===============================
 // ANONYMOUS AUTHENTICATION
@@ -48,12 +52,36 @@ signInAnonymously(auth)
 
 
 // Watch authentication state
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
 
   if (user) {
 
     console.log("✅ User authenticated!");
     console.log("Firebase UID:", user.uid);
+
+    try {
+
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          createdAt: new Date().toISOString()
+        },
+        {
+          merge: true
+        }
+      );
+
+      console.log("✅ User saved to Firestore!");
+
+    } catch (error) {
+
+      console.error(
+        "❌ Failed to save user:",
+        error
+      );
+
+    }
 
   } else {
 
@@ -62,7 +90,6 @@ onAuthStateChanged(auth, (user) => {
   }
 
 });
-
 
 // ===============================
 // NOTIFICATION ELEMENTS
