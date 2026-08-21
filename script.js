@@ -36,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 const auth = getAuth(app);
-const db = getfirestore(app);
+const db = getfiRestore(app);
 
 // ===============================
 // ANONYMOUS AUTHENTICATION
