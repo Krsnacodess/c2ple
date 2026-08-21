@@ -1,4 +1,5 @@
 console.log("🔥 C2ple script.js loaded!");
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
@@ -11,11 +12,17 @@ import {
   signInAnonymously,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
 import {
   getFirestore,
   doc,
   setDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+
+// ===============================
+// FIREBASE CONFIG
+// ===============================
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZ2DeodRJdACy0UNwzQJVBE2aX1nGS3VE",
@@ -36,7 +43,9 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 const auth = getAuth(app);
-const db = getfiRestore(app);
+
+const db = getFirestore(app);
+
 
 // ===============================
 // ANONYMOUS AUTHENTICATION
@@ -44,122 +53,208 @@ const db = getfiRestore(app);
 
 signInAnonymously(auth)
   .then(() => {
+
     console.log("✅ Anonymous authentication started.");
+
   })
   .catch((error) => {
-    console.error("❌ Anonymous authentication failed:", error);
+
+    console.error(
+      "❌ Anonymous authentication failed:",
+      error
+    );
+
   });
 
 
-// Watch authentication state
+// ===============================
+// AUTH STATE
+// ===============================
+
 onAuthStateChanged(auth, async (user) => {
 
-  if (user) {
-
-    console.log("✅ User authenticated!");
-    console.log("Firebase UID:", user.uid);
-
-    try {
-
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          createdAt: new Date().toISOString()
-        },
-        {
-          merge: true
-        }
-      );
-
-      console.log("✅ User saved to Firestore!");
-
-    } catch (error) {
-
-      console.error(
-        "❌ Failed to save user:",
-        error
-      );
-
-    }
-
-  } else {
+  if (!user) {
 
     console.log("❌ No authenticated user.");
+
+    return;
+
+  }
+
+  console.log("✅ User authenticated!");
+
+  console.log(
+    "Firebase UID:",
+    user.uid
+  );
+
+
+  // Save user to Firestore
+
+  try {
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        uid: user.uid,
+        createdAt: new Date().toISOString()
+      },
+      {
+        merge: true
+      }
+    );
+
+    console.log(
+      "✅ User saved to Firestore!"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "❌ Failed to save user to Firestore:",
+      error
+    );
 
   }
 
 });
 
+
 // ===============================
 // NOTIFICATION ELEMENTS
 // ===============================
 
-const button = document.getElementById("enableNotifications");
-const status = document.getElementById("status");
+const button =
+  document.getElementById("enableNotifications");
+
+const status =
+  document.getElementById("status");
+
+
+// Check that the HTML elements exist
+
+if (!button) {
+
+  console.error(
+    "❌ Could not find #enableNotifications button."
+  );
+
+}
+
+if (!status) {
+
+  console.error(
+    "❌ Could not find #status element."
+  );
+
+}
 
 
 // ===============================
 // NOTIFICATION SETUP
 // ===============================
 
-button.addEventListener("click", async () => {
+if (button) {
 
-  try {
+  button.addEventListener(
+    "click",
+    async () => {
 
-    const permission = await Notification.requestPermission();
+      try {
 
-    if (permission !== "granted") {
+        const permission =
+          await Notification.requestPermission();
 
-      status.textContent =
-        "🔕 Notification permission denied.";
 
-      return;
+        if (permission !== "granted") {
+
+          if (status) {
+
+            status.textContent =
+              "🔕 Notification permission denied.";
+
+          }
+
+          return;
+
+        }
+
+
+        const registration =
+          await navigator.serviceWorker.register(
+            "./firebase-messaging-sw.js"
+          );
+
+
+        console.log(
+          "✅ Service worker registered."
+        );
+
+
+        const token =
+          await getToken(
+            messaging,
+            {
+
+              vapidKey:
+                "BM5-24JpOOP60Ss-ZVeX805zi_87A5PvCcdesAVounHz0qwPzAvT7UnXztWd-3ksD9VSCzXEm_4i4bDV3wHJVSU",
+
+              serviceWorkerRegistration:
+                registration
+
+            }
+          );
+
+
+        if (token) {
+
+          console.log(
+            "FCM TOKEN:",
+            token
+          );
+
+          alert(
+            "FCM TOKEN:\n\n" +
+            token
+          );
+
+
+          if (status) {
+
+            status.textContent =
+              "✅ Notifications enabled!";
+
+          }
+
+        } else {
+
+          if (status) {
+
+            status.textContent =
+              "❌ Couldn't get notification token.";
+
+          }
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "❌ Notification setup failed:",
+          error
+        );
+
+
+        if (status) {
+
+          status.textContent =
+            "❌ Notification setup failed. Check console.";
+
+        }
+
+      }
+
     }
+  );
 
-
-    const registration =
-      await navigator.serviceWorker.register(
-        "./firebase-messaging-sw.js"
-      );
-
-
-    const token = await getToken(messaging, {
-
-      vapidKey:
-        "BM5-24JpOOP60Ss-ZVeX805zi_87A5PvCcdesAVounHz0qwPzAvT7UnXztWd-3ksD9VSCzXEm_4i4bDV3wHJVSU",
-
-      serviceWorkerRegistration:
-        registration
-
-    });
-
-
-    if (token) {
-
-      console.log("FCM TOKEN:", token);
-
-      alert(
-        "FCM TOKEN:\n\n" + token
-      );
-
-      status.textContent =
-        "✅ Notifications enabled!";
-
-    } else {
-
-      status.textContent =
-        "❌ Couldn't get notification token.";
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-    status.textContent =
-      "❌ Notification setup failed. Check console.";
-
-  }
-
-});
+}
